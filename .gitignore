@@ -1,0 +1,61 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+env/
+.eggs/
+*.egg-info/
+build/
+dist/
+pip-wheel-metadata/
+
+# --- Datos crudos y procesados (NO se versionan) ---
+data/raw/
+data/processed/
+*.fits
+*.fits.gz
+*.pt
+*.pth
+*.ckpt
+*.npy
+*.npz
+*.h5
+*.hdf5
+
+# Excepción: los splits (TIC IDs train/val/test) SÍ se versionan
+!data/splits/
+!data/splits/**
+
+# --- Outputs de experimentos ---
+experiments/
+runs/
+wandb/
+mlruns/
+lightning_logs/
+tensorboard/
+
+# --- Notebooks: guardamos código, no outputs ---
+.ipynb_checkpoints/
+
+# --- Caches de herramientas ---
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# --- IDE / editores ---
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# --- OS ---
+.DS_Store
+Thumbs.db
+desktop.ini

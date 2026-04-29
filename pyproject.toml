@@ -1,0 +1,77 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "exoplanet"
+version = "0.1.0"
+description = "Mamba Selective State Space Models for exoplanet detection in TESS light curves"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [
+    { name = "José Fabián Zumbado Ruiz" },
+    { name = "Jeremmy Aguilar Villanueva" },
+]
+keywords = [
+    "exoplanets",
+    "tess",
+    "mamba",
+    "state-space-models",
+    "deep-learning",
+    "astronomy",
+]
+classifiers = [
+    "Development Status :: 2 - Pre-Alpha",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Scientific/Engineering :: Astronomy",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+
+dependencies = [
+    # Numérico / tabular
+    "numpy>=1.26",
+    "pandas>=2.1",
+    "scipy>=1.11",
+    "scikit-learn>=1.4",
+    # Astronomía
+    "astropy>=6.0",
+    "lightkurve>=2.4",
+    # Deep learning (CPU/CUDA — instalar build adecuado aparte si hace falta)
+    "torch>=2.2",
+    # Visualización y utilidades
+    "matplotlib>=3.8",
+    "pyyaml>=6.0",
+    "tqdm>=4.66",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "ruff>=0.3",
+    "ipykernel>=6.29",
+    "jupyterlab>=4.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = [
+    "E", "W",  # pycodestyle
+    "F",       # pyflakes
+    "I",       # isort
+    "N",       # pep8-naming
+    "B",       # flake8-bugbear
+    "UP",      # pyupgrade
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
