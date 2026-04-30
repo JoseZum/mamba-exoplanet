@@ -43,7 +43,7 @@ Una **curva de luz** es la serie temporal del brillo de una estrella. TESS la mi
 [1.0001, 0.9998, 1.0000, 0.9999, 0.9982, 0.9979, 0.9981, ...]
 ```
 
-Esa secuencia es exactamente lo que recibe el modelo como input — sin ningún feature engineering adicional. La señal de tránsito es ese dip en los valores, apenas perceptible entre el ruido.
+Esa secuencia es exactamente lo que recibe el modelo como input, sin ningún feature engineering adicional. La señal de tránsito es ese dip en los valores, apenas perceptible entre el ruido.
 
 ---
 
