@@ -1,8 +1,8 @@
 # Mamba-Exoplanet
 
-> Selective State Space Models para detección de exoplanetas en curvas de luz de TESS — un estudio comparativo frente a un baseline CNN 1D.
+> Selective State Space Models para detección de exoplanetas en curvas de luz de TESS, estudio comparativo frente a un baseline CNN 1D.
 
-**Proyecto académico** — Inteligencia Artificial, Instituto Tecnológico de Costa Rica, Semestre I 2026.
+**Proyecto académico** Inteligencia Artificial, Instituto Tecnológico de Costa Rica, Semestre I 2026.
 **Autores:** José Fabián Zumbado Ruiz, Jeremmy Aguilar Villanueva.
 **Profesor:** Kenneth Obando Rodríguez.
 
