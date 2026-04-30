@@ -73,7 +73,7 @@ pip install -e ".[dev]"
 
 Esto instala el paquete `exoplanet` y todas las dependencias declaradas en `pyproject.toml`, incluyendo `torch` (build **CPU** por defecto), `lightkurve`, `astropy`, `jupyterlab`, `pytest` y `ruff`.
 
-### Paso 4 — (Opcional pero recomendado) Reinstalar PyTorch con CUDA
+### Paso 4 — Reinstalar PyTorch con CUDA (necesario para fases 5–9)
 
 La build CPU de `torch` no usa la GPU. Para entrenar Mamba en la RTX 3050 hay que reemplazarla por la rueda CUDA. **Verificá primero la versión de CUDA de tu driver:**
 

@@ -37,13 +37,19 @@ dependencies = [
     "pandas>=2.1",
     "scipy>=1.11",
     "scikit-learn>=1.4",
+    "imbalanced-learn>=0.12",      # SMOTE para balanceo de clases (Fase 5+)
     # Astronomía
     "astropy>=6.0",
     "lightkurve>=2.4",
-    # Deep learning (CPU/CUDA — instalar build adecuado aparte si hace falta)
+    "astroquery>=0.4",             # acceso a MAST y NASA Exoplanet Archive
+    "pyvo>=1.5",                   # consultas TAP al TOI Catalog (Fase 1)
+    # Deep learning (CPU/CUDA — instalar build CUDA aparte, ver README Paso 4)
     "torch>=2.2",
+    "einops>=0.8",                 # operaciones de tensor reutilizadas en Mamba (Fase 8)
+    "tensorboard>=2.16",           # logs de entrenamiento (Fase 6)
     # Visualización y utilidades
     "matplotlib>=3.8",
+    "seaborn>=0.13",               # curvas ROC/PR y comparaciones (Fases 7/9/10)
     "pyyaml>=6.0",
     "tqdm>=4.66",
 ]
