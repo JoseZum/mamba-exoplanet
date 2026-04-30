@@ -96,11 +96,25 @@ Verificación de CUDA:
 python -c "import torch; print('CUDA OK' if torch.cuda.is_available() else 'CPU only', '|', torch.cuda.get_device_name(0) if torch.cuda.is_available() else '')"
 ```
 
-### Paso 5 — Verificación final
+### Paso 5 — (Fase 8 solamente) Instalar mamba-ssm
+
+> **Advertencia:** `mamba-ssm` requiere compilar extensiones CUDA y **no tiene wheels pre-construidos para Windows nativo**. Si el paso falla, hay tres alternativas (decidir en Fase 8):
+> - (a) Usar WSL2 con Ubuntu y repetir el setup allí.
+> - (b) Implementar Mamba en PyTorch puro (más lento, portable).
+> - (c) Entrenar en Google Colab con GPU A100/T4.
 
 ```bash
-pytest -q                                                # los smoke tests deben pasar
-python -c "import exoplanet; print(exoplanet.__version__)"   # → 0.1.0
+# Solo intentar si tenés nvcc disponible (CUDA Toolkit completo instalado):
+pip install causal-conv1d mamba-ssm
+```
+
+### Paso 6 — Verificación final
+
+```bash
+pytest -q                                                      # smoke tests deben pasar
+python -c "import exoplanet; print(exoplanet.__version__)"     # → 0.1.0
+python -c "import torch; print('CUDA OK' if torch.cuda.is_available() else 'CPU only', '|', torch.cuda.get_device_name(0) if torch.cuda.is_available() else '')"
+python -c "import seaborn, tensorboard, einops, imbalanced_learn; print('deps extra OK')"
 ```
 
 ## Reproducir resultados (cuando estén disponibles)
