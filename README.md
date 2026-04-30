@@ -55,14 +55,14 @@ El **TOI Catalog** (*TESS Objects of Interest*) es la tabla pública donde la NA
 
 | Estado | Significado | Uso en este proyecto |
 |---|---|---|
-| `CP` — Confirmed Planet | Planeta confirmado por revisión científica | **Clase positiva** (label = 1) |
-| `FP` — False Positive | Señal descartada: binaria eclipsante, artefacto, etc. | **Clase negativa** (label = 0) |
-| `PC` — Planet Candidate | Sin confirmación aún | Excluido del entrenamiento supervisado |
-| `KP` — Known Planet | Planeta ya conocido de otras misiones | Excluido |
+| `CP` - Confirmed Planet | Planeta confirmado por revisión científica | **Clase positiva** (label = 1) |
+| `FP` - False Positive | Señal descartada: binaria eclipsante, artefacto, etc. | **Clase negativa** (label = 0) |
+| `PC` - Planet Candidate | Sin confirmación aún | Excluido del entrenamiento supervisado |
+| `KP` - Known Planet | Planeta ya conocido de otras misiones | Excluido |
 
 El dataset de este proyecto usa ~638 CP y ~1,400 FP (~2,038 ejemplos etiquetados en total).
 
-TESS no observa el cielo completo a la vez — lo divide en regiones llamadas **sectores**, cada una observada durante ≈27 días. Una misma estrella puede aparecer en múltiples sectores, generando varias curvas de luz para el mismo TIC ID.
+TESS no observa el cielo completo a la vez - lo divide en regiones llamadas **sectores**, cada una observada durante ≈27 días. Una misma estrella puede aparecer en múltiples sectores, generando varias curvas de luz para el mismo TIC ID.
 
 <img src="public/observation_sector.jpg" width="480" alt="Sectores de observación de TESS"/>
 
@@ -70,7 +70,7 @@ TESS no observa el cielo completo a la vez — lo divide en regiones llamadas **
 
 ### Data leakage por estrella: la trampa más común en este dominio
 
-Una misma estrella puede haber sido observada por TESS en múltiples sectores, generando varias curvas de luz con el mismo TIC ID. Si al dividir los datos se mete el sector 1 de una estrella en entrenamiento y su sector 13 en test, el modelo puede aprender características propias de esa estrella (ruido estelar, variabilidad intrínseca) y "reconocerla" en el test — métricas infladas sin generalización real.
+Una misma estrella puede haber sido observada por TESS en múltiples sectores, generando varias curvas de luz con el mismo TIC ID. Si al dividir los datos se mete el sector 1 de una estrella en entrenamiento y su sector 13 en test, el modelo puede aprender características propias de esa estrella (ruido estelar, variabilidad intrínseca) y "reconocerla" en el test - métricas infladas sin generalización real.
 
 **La regla de este proyecto:** el split se hace siempre por TIC ID, nunca por sector.
 
@@ -115,27 +115,27 @@ mamba-exoplanet/
 
 > **Nota sobre OneDrive:** si el repositorio queda dentro de una carpeta sincronizada por OneDrive, mové el repo a una ruta local (p. ej. `C:\dev\mamba-exoplanet\`) **antes** de crear el `.venv`. OneDrive intenta sincronizar miles de archivos del entorno virtual y puede corromper binarios de PyTorch.
 
-### Paso 1 — Clonar y posicionarse
+### Paso 1 - Clonar y posicionarse
 
 ```bash
 git clone <url-del-repo> mamba-exoplanet
 cd mamba-exoplanet
 ```
 
-### Paso 2 — Crear y activar el entorno virtual
+### Paso 2 - Crear y activar el entorno virtual
 
 ```bash
 python -m venv .venv
 
-# Activar — Git Bash en Windows:
+# Activar - Git Bash en Windows:
 source .venv/Scripts/activate
-# Activar — PowerShell:
+# Activar - PowerShell:
 # .venv\Scripts\Activate.ps1
-# Activar — Linux / macOS:
+# Activar - Linux / macOS:
 # source .venv/bin/activate
 ```
 
-### Paso 3 — Instalar el paquete en modo editable
+### Paso 3 - Instalar el paquete en modo editable
 
 ```bash
 python -m pip install --upgrade pip
@@ -144,7 +144,7 @@ pip install -e ".[dev]"
 
 Esto instala el paquete `exoplanet` y todas las dependencias declaradas en `pyproject.toml`, incluyendo `torch` (build **CPU** por defecto), `lightkurve`, `astropy`, `jupyterlab`, `pytest` y `ruff`.
 
-### Paso 4 — Reinstalar PyTorch con CUDA (necesario para fases 5–9)
+### Paso 4 - Reinstalar PyTorch con CUDA (necesario para fases 5–9)
 
 La build CPU de `torch` no usa la GPU. Para entrenar Mamba en la RTX 3050 hay que reemplazarla por la rueda CUDA. **Verificá primero la versión de CUDA de tu driver:**
 
@@ -167,18 +167,18 @@ Verificación de CUDA:
 python -c "import torch; print('CUDA OK' if torch.cuda.is_available() else 'CPU only', '|', torch.cuda.get_device_name(0) if torch.cuda.is_available() else '')"
 ```
 
-### Paso 5 — (Fases 8–9) Setup WSL2 para Mamba
+### Paso 5 - (Fases 8–9) Setup WSL2 para Mamba
 
 `mamba-ssm` requiere compilar extensiones CUDA con `nvcc` y no tiene wheels pre-construidos para Windows nativo. **Decisión tomada: el modelo Mamba se desarrolla y entrena en WSL2 con Ubuntu.** Las fases 0–7 (exploración, preprocesamiento, CNN baseline) corren en Windows normalmente.
 
-#### 5a — Activar WSL2 y Ubuntu (una sola vez, como administrador en PowerShell)
+#### 5a - Activar WSL2 y Ubuntu (una sola vez, como administrador en PowerShell)
 
 ```powershell
 wsl --install -d Ubuntu-24.04
 # Reiniciar si el sistema lo pide, luego abrir Ubuntu desde el menú inicio
 ```
 
-#### 5b — Instalar CUDA Toolkit en WSL2
+#### 5b - Instalar CUDA Toolkit en WSL2
 
 ```bash
 # Dentro de Ubuntu WSL2:
@@ -195,7 +195,7 @@ nvidia-smi     # debe mostrar la RTX 3050 con CUDA 12.8
 nvcc --version # debe mostrar release 12.8
 ```
 
-#### 5c — Clonar el repo y crear entorno en WSL2
+#### 5c - Clonar el repo y crear entorno en WSL2
 
 ```bash
 # Dentro de Ubuntu WSL2:
@@ -209,14 +209,14 @@ pip uninstall -y torch
 pip install torch --index-url https://download.pytorch.org/whl/cu128
 ```
 
-#### 5d — Instalar mamba-ssm en WSL2
+#### 5d - Instalar mamba-ssm en WSL2
 
 ```bash
 pip install causal-conv1d mamba-ssm
 python -c "from mamba_ssm import Mamba; print('mamba-ssm OK')"
 ```
 
-### Paso 6 — Verificación final
+### Paso 6 - Verificación final
 
 ```bash
 pytest -q                                                      # smoke tests deben pasar
@@ -256,7 +256,7 @@ Esta tabla documenta el entorno exacto usado para producir los resultados del pa
 
 | Componente | Especificación |
 |---|---|
-| GPU | NVIDIA RTX 3050 (4 GB VRAM) — cuello de botella |
+| GPU | NVIDIA RTX 3050 (4 GB VRAM) - cuello de botella |
 | CPU | Intel Core i5-12450H (8 cores, 12 threads) |
 | RAM | 40 GB |
 
@@ -264,17 +264,17 @@ Las restricciones de VRAM motivan el uso de mixed precision (FP16), `batch_size 
 
 ## Roadmap
 
-- [x] **Fase 0** — Setup del repositorio
-- [ ] **Fase 1** — Exploración del TOI Catalog
-- [ ] **Fase 2** — Pipeline de descarga (MAST + lightkurve)
-- [ ] **Fase 3** — Preprocesamiento (normalización, NaN, longitud fija)
-- [ ] **Fase 4** — Splits por TIC ID + `Dataset` PyTorch
-- [ ] **Fase 5** — CNN 1D baseline
-- [ ] **Fase 6** — Training loop (logs, seeds, checkpoints)
-- [ ] **Fase 7** — Evaluación (métricas + curvas ROC/PR)
-- [ ] **Fase 8** — Modelo Mamba
-- [ ] **Fase 9** — Comparación rigurosa CNN vs Mamba
-- [ ] **Fase 10** — Paper (figuras y tablas finales)
+- [x] **Fase 0** - Setup del repositorio
+- [ ] **Fase 1** - Exploración del TOI Catalog
+- [ ] **Fase 2** - Pipeline de descarga (MAST + lightkurve)
+- [ ] **Fase 3** - Preprocesamiento (normalización, NaN, longitud fija)
+- [ ] **Fase 4** - Splits por TIC ID + `Dataset` PyTorch
+- [ ] **Fase 5** - CNN 1D baseline
+- [ ] **Fase 6** - Training loop (logs, seeds, checkpoints)
+- [ ] **Fase 7** - Evaluación (métricas + curvas ROC/PR)
+- [ ] **Fase 8** - Modelo Mamba
+- [ ] **Fase 9** - Comparación rigurosa CNN vs Mamba
+- [ ] **Fase 10** - Paper (figuras y tablas finales)
 
 ## Cita
 
