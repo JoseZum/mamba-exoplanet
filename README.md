@@ -36,26 +36,72 @@ mamba-exoplanet/
 
 ## Instalación
 
-> El proyecto vive dentro de OneDrive. Para evitar que OneDrive sincronice el entorno virtual y se corrompa, **creá `.venv` con un nombre que arranca con `.`** (ya está ignorado por OneDrive y por Git) o, mejor aún, montá el `.venv` fuera de OneDrive y apuntá tu IDE allí.
+**Requisitos previos:**
+
+- Python **3.10 u 3.11** (probado con 3.11.9). Se recomienda la build oficial de [python.org](https://www.python.org/downloads/) sobre la versión de Microsoft Store, que a veces tiene problemas de permisos en `pip install -e`.
+- Git Bash o PowerShell en Windows; bash en Linux/macOS.
+- Aproximadamente **2.5 GB libres** en disco para el entorno completo (incluyendo PyTorch con CUDA).
+
+> **Nota sobre OneDrive:** si el repositorio queda dentro de una carpeta sincronizada por OneDrive, mové el repo a una ruta local (p. ej. `C:\dev\mamba-exoplanet\`) **antes** de crear el `.venv`. OneDrive intenta sincronizar miles de archivos del entorno virtual y puede corromper binarios de PyTorch.
+
+### Paso 1 — Clonar y posicionarse
 
 ```bash
-# 1. Crear entorno virtual (Python ≥ 3.10)
-python -m venv .venv
-
-# 2. Activarlo
-source .venv/Scripts/activate    # Git Bash en Windows
-# .venv\Scripts\activate          # PowerShell
-
-# 3. Instalar el paquete en modo editable (con extras de desarrollo)
-pip install --upgrade pip
-pip install -e ".[dev]"
-
-# 4. Verificación rápida
-pytest -q
-python -c "import exoplanet; print(exoplanet.__version__)"
+git clone <url-del-repo> mamba-exoplanet
+cd mamba-exoplanet
 ```
 
-> **PyTorch + CUDA:** la dependencia `torch` se instala en su build CPU por defecto. Para usar la RTX 3050, reinstalá la rueda con CUDA: visitá <https://pytorch.org/get-started/locally/> y copiá el comando que corresponde a tu versión de CUDA.
+### Paso 2 — Crear y activar el entorno virtual
+
+```bash
+python -m venv .venv
+
+# Activar — Git Bash en Windows:
+source .venv/Scripts/activate
+# Activar — PowerShell:
+# .venv\Scripts\Activate.ps1
+# Activar — Linux / macOS:
+# source .venv/bin/activate
+```
+
+### Paso 3 — Instalar el paquete en modo editable
+
+```bash
+python -m pip install --upgrade pip
+pip install -e ".[dev]"
+```
+
+Esto instala el paquete `exoplanet` y todas las dependencias declaradas en `pyproject.toml`, incluyendo `torch` (build **CPU** por defecto), `lightkurve`, `astropy`, `jupyterlab`, `pytest` y `ruff`.
+
+### Paso 4 — (Opcional pero recomendado) Reinstalar PyTorch con CUDA
+
+La build CPU de `torch` no usa la GPU. Para entrenar Mamba en la RTX 3050 hay que reemplazarla por la rueda CUDA. **Verificá primero la versión de CUDA de tu driver:**
+
+```bash
+nvidia-smi    # mirá "CUDA Version: XX.Y" en la esquina superior derecha
+```
+
+Luego desinstalá la build CPU e instalá la build que corresponde. Para CUDA 12.1 (la más común en drivers recientes de la RTX 3050):
+
+```bash
+pip uninstall -y torch
+pip install torch --index-url https://download.pytorch.org/whl/cu121
+```
+
+Para otras versiones de CUDA, consultá <https://pytorch.org/get-started/locally/> y copiá el comando correspondiente.
+
+Verificación de CUDA:
+
+```bash
+python -c "import torch; print('CUDA OK' if torch.cuda.is_available() else 'CPU only', '|', torch.cuda.get_device_name(0) if torch.cuda.is_available() else '')"
+```
+
+### Paso 5 — Verificación final
+
+```bash
+pytest -q                                                # los smoke tests deben pasar
+python -c "import exoplanet; print(exoplanet.__version__)"   # → 0.1.0
+```
 
 ## Reproducir resultados (cuando estén disponibles)
 
