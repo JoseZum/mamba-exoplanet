@@ -29,7 +29,7 @@ Sin tránsito:  ─────────────────────�
 Con tránsito:  ───────────╲____╱───────────
 ```
 
-![Diagrama de tránsito](public/transit_white.png)
+<img src="public/transit_white.png" width="480" alt="Diagrama de tránsito"/>
 
 Si ese bajón es pequeño, periódico y simétrico, hay evidencia de un planeta en órbita.
 
