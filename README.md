@@ -12,6 +12,73 @@ Evaluar si una arquitectura basada en **Mamba** (Gu & Dao, 2023) puede igualar o
 
 Métricas objetivo: AUC-ROC ≥ 0.93, F1 (clase planeta) ≥ 0.85, mejora Mamba sobre CNN ≥ +3 p.p. de AUC, latencia de inferencia < 100 ms por estrella.
 
+---
+
+## Contexto: ¿de qué trata este proyecto?
+
+> Para quien llega sin conocimiento previo de astronomía o ML.
+
+---
+
+### ¿Qué es un exoplaneta y cómo se detecta?
+
+Un **exoplaneta** es un planeta que orbita una estrella distinta al Sol. No podemos fotografiarlos directamente — están demasiado lejos. Uno de los métodos indirectos más usados es el **método de tránsito**: cuando un planeta pasa por delante de su estrella desde nuestro punto de vista, tapa una pequeña fracción de la luz. El brillo de la estrella baja brevemente y luego vuelve a la normalidad.
+
+```
+Sin tránsito:  ─────────────────────────────
+Con tránsito:  ───────────╲____╱───────────
+```
+
+![Diagrama de tránsito](public/transit_white.png)
+
+Si ese bajón es pequeño, periódico y simétrico, hay evidencia de un planeta en órbita.
+
+---
+
+### ¿Qué es una curva de luz y por qué es la entrada del modelo?
+
+Una **curva de luz** es la serie temporal del brillo de una estrella. TESS la mide cada 2 minutos durante ≈27 días por sector, produciendo una secuencia de ~18,000 puntos por estrella:
+
+```
+[1.0001, 0.9998, 1.0000, 0.9999, 0.9982, 0.9979, 0.9981, ...]
+```
+
+Esa secuencia es exactamente lo que recibe el modelo como input — sin ningún feature engineering adicional. La señal de tránsito es ese dip en los valores, apenas perceptible entre el ruido.
+
+---
+
+### ¿Qué son TESS y el TOI Catalog?
+
+**TESS** (*Transiting Exoplanet Survey Satellite*, NASA, 2018) genera ≈27 GB de datos fotométricos por día observando más de 200,000 estrellas. Es imposible revisarlos a mano, de ahí la necesidad de clasificadores automáticos.
+
+El **TOI Catalog** (*TESS Objects of Interest*) es la tabla pública donde la NASA registra cada candidato detectado por TESS. Cada estrella tiene un identificador único (**TIC ID**) y un estado:
+
+| Estado | Significado | Uso en este proyecto |
+|---|---|---|
+| `CP` — Confirmed Planet | Planeta confirmado por revisión científica | **Clase positiva** (label = 1) |
+| `FP` — False Positive | Señal descartada: binaria eclipsante, artefacto, etc. | **Clase negativa** (label = 0) |
+| `PC` — Planet Candidate | Sin confirmación aún | Excluido del entrenamiento supervisado |
+| `KP` — Known Planet | Planeta ya conocido de otras misiones | Excluido |
+
+El dataset de este proyecto usa ~638 CP y ~1,400 FP (~2,038 ejemplos etiquetados en total).
+
+---
+
+### Data leakage por estrella: la trampa más común en este dominio
+
+Una misma estrella puede haber sido observada por TESS en múltiples sectores, generando varias curvas de luz con el mismo TIC ID. Si al dividir los datos se mete el sector 1 de una estrella en entrenamiento y su sector 13 en test, el modelo puede aprender características propias de esa estrella (ruido estelar, variabilidad intrínseca) y "reconocerla" en el test — métricas infladas sin generalización real.
+
+**La regla de este proyecto:** el split se hace siempre por TIC ID, nunca por sector.
+
+```
+TIC 261136679 → train   (sectores 1, 2 y 13 van todos a train)
+TIC 123456789 → test    (todos sus sectores van a test)
+```
+
+Ninguna estrella aparece en más de una partición.
+
+---
+
 ## Estructura del repositorio
 
 ```
