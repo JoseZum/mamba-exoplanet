@@ -81,11 +81,11 @@ La build CPU de `torch` no usa la GPU. Para entrenar Mamba en la RTX 3050 hay qu
 nvidia-smi    # mirá "CUDA Version: XX.Y" en la esquina superior derecha
 ```
 
-Luego desinstalá la build CPU e instalá la build que corresponde. Para CUDA 12.1 (la más común en drivers recientes de la RTX 3050):
+Luego desinstalá la build CPU e instalá la build que corresponde. Con driver 581+ (CUDA 13.0), usar la rueda CUDA 12.8:
 
 ```bash
 pip uninstall -y torch
-pip install torch --index-url https://download.pytorch.org/whl/cu121
+pip install torch --index-url https://download.pytorch.org/whl/cu128
 ```
 
 Para otras versiones de CUDA, consultá <https://pytorch.org/get-started/locally/> y copiá el comando correspondiente.
