@@ -100,6 +100,7 @@ mamba-exoplanet/
 ├── scripts/                # CLIs reproducibles (download_data, train, evaluate)
 ├── experiments/            # outputs de cada run               (gitignored)
 ├── tests/                  # pytest
+├── public/                 # imágenes para el README.md
 └── paper/                  # LaTeX, figuras y tablas finales
 ```
 
