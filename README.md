@@ -62,7 +62,7 @@ El **TOI Catalog** (*TESS Objects of Interest*) es la tabla pública donde la NA
 
 El dataset de este proyecto usa ~638 CP y ~1,400 FP (~2,038 ejemplos etiquetados en total).
 
-TESS no observa el cielo completo a la vez - lo divide en regiones llamadas **sectores**, cada una observada durante ≈27 días. Una misma estrella puede aparecer en múltiples sectores, generando varias curvas de luz para el mismo TIC ID.
+TESS no observa el cielo completo a la vez: lo divide en regiones llamadas **sectores**, cada una observada durante ≈27 días. Una misma estrella puede aparecer en múltiples sectores, generando varias curvas de luz para el mismo TIC ID.
 
 <img src="public/observation_sector.jpg" width="480" alt="Sectores de observación de TESS"/>
 
@@ -70,7 +70,7 @@ TESS no observa el cielo completo a la vez - lo divide en regiones llamadas **se
 
 ### Data leakage por estrella: la trampa más común en este dominio
 
-Una misma estrella puede haber sido observada por TESS en múltiples sectores, generando varias curvas de luz con el mismo TIC ID. Si al dividir los datos se mete el sector 1 de una estrella en entrenamiento y su sector 13 en test, el modelo puede aprender características propias de esa estrella (ruido estelar, variabilidad intrínseca) y "reconocerla" en el test - métricas infladas sin generalización real.
+Una misma estrella puede haber sido observada por TESS en múltiples sectores, generando varias curvas de luz con el mismo TIC ID. Si al dividir los datos se mete el sector 1 de una estrella en entrenamiento y su sector 13 en test, el modelo puede aprender características propias de esa estrella (ruido estelar, variabilidad intrínseca) y "reconocerla" en el test. El resultado son métricas infladas que no reflejan generalización real.
 
 **La regla de este proyecto:** el split se hace siempre por TIC ID, nunca por sector.
 
@@ -256,7 +256,7 @@ Esta tabla documenta el entorno exacto usado para producir los resultados del pa
 
 | Componente | Especificación |
 |---|---|
-| GPU | NVIDIA RTX 3050 (4 GB VRAM) - cuello de botella |
+| GPU | NVIDIA RTX 3050 (4 GB VRAM, cuello de botella) |
 | CPU | Intel Core i5-12450H (8 cores, 12 threads) |
 | RAM | 40 GB |
 
