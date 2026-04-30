@@ -163,6 +163,24 @@ python scripts/train.py --config configs/mamba_small.yaml
 python scripts/evaluate.py --run experiments/<run_id>
 ```
 
+## Entorno de referencia
+
+Esta tabla documenta el entorno exacto usado para producir los resultados del paper. Es necesaria para reproducibilidad.
+
+| Parámetro | Fases 0–7 (Windows) | Fase 8–9 (WSL2) |
+|---|---|---|
+| OS | Windows 11 Home 26200 | Ubuntu 24.04 en WSL2 |
+| Python | 3.11.9 | 3.11.x |
+| PyTorch | 2.11.0+cu128 | 2.11.0+cu128 |
+| CUDA Toolkit | 12.8 (via wheel) | 12.8 (nvcc instalado) |
+| GPU | NVIDIA RTX 3050 4 GB | NVIDIA RTX 3050 4 GB (via WSL2) |
+| Driver NVIDIA | 581.83 | 581.83 |
+| mamba-ssm | N/A | por determinar en Fase 8 |
+| Commit hash | por completar al cierre | igual |
+| Seeds globales | por definir en Fase 6 | igual |
+
+> El commit hash y los seeds se fijan en Fase 6 y se copian al paper en Fase 10.
+
 ## Hardware de referencia
 
 | Componente | Especificación |
