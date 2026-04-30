@@ -26,7 +26,7 @@ Un **exoplaneta** es un planeta que orbita una estrella distinta al Sol. No pode
 
 ```
 Sin tránsito:  ─────────────────────────────
-Con tránsito:  ───────────╲____╱───────────
+Con tránsito:  ───────────\____╱───────────
 ```
 
 <img src="public/transit_white.png" width="480" alt="Diagrama de tránsito"/>
