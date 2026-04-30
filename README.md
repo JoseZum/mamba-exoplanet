@@ -96,16 +96,53 @@ Verificación de CUDA:
 python -c "import torch; print('CUDA OK' if torch.cuda.is_available() else 'CPU only', '|', torch.cuda.get_device_name(0) if torch.cuda.is_available() else '')"
 ```
 
-### Paso 5 — (Fase 8 solamente) Instalar mamba-ssm
+### Paso 5 — (Fases 8–9) Setup WSL2 para Mamba
 
-> **Advertencia:** `mamba-ssm` requiere compilar extensiones CUDA y **no tiene wheels pre-construidos para Windows nativo**. Si el paso falla, hay tres alternativas (decidir en Fase 8):
-> - (a) Usar WSL2 con Ubuntu y repetir el setup allí.
-> - (b) Implementar Mamba en PyTorch puro (más lento, portable).
-> - (c) Entrenar en Google Colab con GPU A100/T4.
+`mamba-ssm` requiere compilar extensiones CUDA con `nvcc` y no tiene wheels pre-construidos para Windows nativo. **Decisión tomada: el modelo Mamba se desarrolla y entrena en WSL2 con Ubuntu.** Las fases 0–7 (exploración, preprocesamiento, CNN baseline) corren en Windows normalmente.
+
+#### 5a — Activar WSL2 y Ubuntu (una sola vez, como administrador en PowerShell)
+
+```powershell
+wsl --install -d Ubuntu-24.04
+# Reiniciar si el sistema lo pide, luego abrir Ubuntu desde el menú inicio
+```
+
+#### 5b — Instalar CUDA Toolkit en WSL2
 
 ```bash
-# Solo intentar si tenés nvcc disponible (CUDA Toolkit completo instalado):
+# Dentro de Ubuntu WSL2:
+wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2404/x86_64/cuda-keyring_1.1-1_all.deb
+sudo dpkg -i cuda-keyring_1.1-1_all.deb
+sudo apt-get update
+sudo apt-get -y install cuda-toolkit-12-8
+```
+
+Verificar que la GPU es visible:
+
+```bash
+nvidia-smi     # debe mostrar la RTX 3050 con CUDA 12.8
+nvcc --version # debe mostrar release 12.8
+```
+
+#### 5c — Clonar el repo y crear entorno en WSL2
+
+```bash
+# Dentro de Ubuntu WSL2:
+git clone <url-del-repo> ~/mamba-exoplanet
+cd ~/mamba-exoplanet
+python3.11 -m venv .venv
+source .venv/bin/activate
+pip install --upgrade pip
+pip install -e ".[dev]"
+pip uninstall -y torch
+pip install torch --index-url https://download.pytorch.org/whl/cu128
+```
+
+#### 5d — Instalar mamba-ssm en WSL2
+
+```bash
 pip install causal-conv1d mamba-ssm
+python -c "from mamba_ssm import Mamba; print('mamba-ssm OK')"
 ```
 
 ### Paso 6 — Verificación final
