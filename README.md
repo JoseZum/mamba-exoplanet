@@ -62,6 +62,10 @@ El **TOI Catalog** (*TESS Objects of Interest*) es la tabla pública donde la NA
 
 El dataset de este proyecto usa ~638 CP y ~1,400 FP (~2,038 ejemplos etiquetados en total).
 
+TESS no observa el cielo completo a la vez — lo divide en regiones llamadas **sectores**, cada una observada durante ≈27 días. Una misma estrella puede aparecer en múltiples sectores, generando varias curvas de luz para el mismo TIC ID.
+
+<img src="public/observation_sector.jpg" width="480" alt="Sectores de observación de TESS"/>
+
 ---
 
 ### Data leakage por estrella: la trampa más común en este dominio
