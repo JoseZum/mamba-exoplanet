@@ -157,7 +157,7 @@ python -c "import seaborn, tensorboard, einops, imbalanced_learn; print('deps ex
 ## Reproducir resultados (cuando estén disponibles)
 
 ```bash
-python scripts/download_data.py --catalog data/splits/tics.csv
+python scripts/get_data.py --catalog data/splits/tics.csv
 python scripts/train.py --config configs/cnn_baseline.yaml
 python scripts/train.py --config configs/mamba_small.yaml
 python scripts/evaluate.py --run experiments/<run_id>

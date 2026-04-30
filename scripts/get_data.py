@@ -5,7 +5,7 @@ Salida:
   data/splits/toi_summary.csv | resumen ligero (tid, tfopwg_disp, sectors), versionado
 
 Uso:
-  python scripts/download_toi_catalog.py
+  python scripts/get_data.py
 """
 
 import sys
