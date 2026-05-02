@@ -47,10 +47,6 @@ El driver instalado (581.83) soporta hasta CUDA 13.0, compatible con la rueda `c
 - Notebook `notebooks/01_toi_eda.ipynb` con análisis de las 6 variables clave del catálogo.
 - Archivo `data/splits/tics_labeled.csv` generado: solo CP y FP, con label binario (1/0).
 
-### Nombre del script
-
-El script inicialmente se llamó `download_toi_catalog.py`. Se renombró a `get_data.py` por ser el nombre estándar en repos de ML y porque en Fase 2 el mismo script puede extenderse con flags (`--catalog`, `--fits`) sin cambiar el nombre.
-
 ### Descubrimientos del análisis
 
 **Conteos reales (al 2026-04-30):**
