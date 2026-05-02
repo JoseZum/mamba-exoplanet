@@ -81,7 +81,7 @@ El TOI Catalog tiene 85 columnas. **Ninguna entra al modelo como feature**: la e
 | `st_tmag` | Magnitud TESS. Estrellas con tmag > 15 tienen curvas muy ruidosas; se analiza en Fase 1 para decidir si hay que filtrar |
 | `pl_orbper` | Periodo orbital en días. Confirma que el tránsito ocurre dentro de los 27 dias que cubre un sector (~18,000 puntos) |
 | `pl_trandurh` | Duración del tránsito en horas. Confirma que la señal abarca suficientes puntos para ser detectable |
-| `pl_trandep` | Profundidad del tránsito en ppm. Se analiza para entender si CP y FP tienen distribuciones distintas (señal de posible leakage si se usara como feature, que no se hara) |
+| `pl_trandep` | Profundidad del tránsito en ppm. Se analiza para entender si CP y FP tienen distribuciones distintas |
 | `sectors` | Sectores en que fue observada la estrella. Informa cuántos `.fits` hay que descargar por TIC ID en Fase 2 |
 
 **Por que se excluyen las otras 78 columnas:**
