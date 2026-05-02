@@ -60,7 +60,7 @@ El **TOI Catalog** (*TESS Objects of Interest*) es la tabla pública donde la NA
 | `PC` - Planet Candidate | Sin confirmación aún | Excluido del entrenamiento supervisado |
 | `KP` - Known Planet | Planeta ya conocido de otras misiones | Excluido |
 
-El dataset de este proyecto usa ~638 CP y ~1,400 FP (~2,038 ejemplos etiquetados en total).
+El dataset de este proyecto usa 724 CP y 1,242 FP (1,966 ejemplos etiquetados en total, conteo real al 2026-04-30).
 
 TESS no observa el cielo completo a la vez: lo divide en regiones llamadas **sectores**, cada una observada durante ≈27 días. Una misma estrella puede aparecer en múltiples sectores, generando varias curvas de luz para el mismo TIC ID.
 
@@ -68,7 +68,32 @@ TESS no observa el cielo completo a la vez: lo divide en regiones llamadas **sec
 
 ---
 
-### Data leakage por estrella: la trampa más común en este dominio
+### Variables del TOI Catalog: cuales usamos y por que
+
+El TOI Catalog tiene 85 columnas. **Ninguna entra al modelo como feature**: la entrada del modelo es siempre la serie temporal `PDCSAP_FLUX` de los archivos `.fits`. Las columnas del catálogo solo sirven para seleccionar qué estrellas descargar y con qué label.
+
+**Variables que el pipeline usa activamente:**
+
+| Columna | Para qué |
+|---|---|
+| `tid` | Identificador único de la estrella. Se usa para pedir los `.fits` a MAST y para hacer el split por estrella |
+| `tfopwg_disp` | Disposición (CP, FP, PC, KP). Define el label: CP = 1, FP = 0 |
+| `st_tmag` | Magnitud TESS. Estrellas con tmag > 15 tienen curvas muy ruidosas; se analiza en Fase 1 para decidir si hay que filtrar |
+| `pl_orbper` | Periodo orbital en días. Confirma que el tránsito ocurre dentro de los 27 dias que cubre un sector (~18,000 puntos) |
+| `pl_trandurh` | Duración del tránsito en horas. Confirma que la señal abarca suficientes puntos para ser detectable |
+| `pl_trandep` | Profundidad del tránsito en ppm. Se analiza para entender si CP y FP tienen distribuciones distintas (señal de posible leakage si se usara como feature, que no se hara) |
+| `sectors` | Sectores en que fue observada la estrella. Informa cuántos `.fits` hay que descargar por TIC ID en Fase 2 |
+
+**Por que se excluyen las otras 78 columnas:**
+
+- Coordenadas y movimiento propio (`ra`, `dec`, `st_pmra`, `st_pmdec`, etc.): no tienen relacion causal con si una señal es planeta o falso positivo a efectos del modelo.
+- Columnas de error (`*err1`, `*err2`, `*symerr`, `*lim`): metadatos de precision de medicion, irrelevantes para clasificacion.
+- Propiedades estelares (`st_teff`, `st_logg`, `st_rad`, `st_dist`): podrian usarse como features auxiliares en arquitecturas mas complejas, pero introducen riesgo de leakage y este proyecto evalua el modelo operando sobre señal cruda.
+- Fechas y metadatos (`toi_created`, `rowupdate`, `release_date`, `toipfx`, `toidisplay`): administracion del catalogo, sin valor predictivo.
+
+---
+
+### Data leakage por estrella: la trampa mas comun en este dominio
 
 Una misma estrella puede haber sido observada por TESS en múltiples sectores, generando varias curvas de luz con el mismo TIC ID. Si al dividir los datos se mete el sector 1 de una estrella en entrenamiento y su sector 13 en test, el modelo puede aprender características propias de esa estrella (ruido estelar, variabilidad intrínseca) y hacer overfitting en el test. El resultado son métricas infladas que no reflejan generalización real. Por eso, el split se hace siempre por TIC ID, nunca por sector.
 
