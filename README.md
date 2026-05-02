@@ -93,7 +93,7 @@ El TOI Catalog tiene 85 columnas. **Ninguna entra al modelo como feature**: la e
 
 ---
 
-### Data leakage por estrella: la trampa mas comun en este dominio
+### Data leakage por estrella: la trampa mas común en este dominio
 
 Una misma estrella puede haber sido observada por TESS en múltiples sectores, generando varias curvas de luz con el mismo TIC ID. Si al dividir los datos se mete el sector 1 de una estrella en entrenamiento y su sector 13 en test, el modelo puede aprender características propias de esa estrella (ruido estelar, variabilidad intrínseca) y hacer overfitting en el test. El resultado son métricas infladas que no reflejan generalización real. Por eso, el split se hace siempre por TIC ID, nunca por sector.
 
