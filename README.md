@@ -87,7 +87,7 @@ El TOI Catalog tiene 85 columnas. **Ninguna entra al modelo como feature**: la e
 **Por que se excluyen las otras 78 columnas:**
 
 - Coordenadas y movimiento propio (`ra`, `dec`, `st_pmra`, `st_pmdec`, etc.): no tienen relacion causal con si una señal es planeta o falso positivo a efectos del modelo.
-- Columnas de error (`*err1`, `*err2`, `*symerr`, `*lim`): metadatos de precisión de medicion, irrelevantes para clasificacion.
+- Columnas de error (`*err1`, `*err2`, `*symerr`, `*lim`): metadatos de precisión de medición, irrelevantes para clasificacion.
 - Propiedades estelares (`st_teff`, `st_logg`, `st_rad`, `st_dist`): podrian usarse como features auxiliares en arquitecturas mas complejas, pero introducen riesgo de leakage y este proyecto evalua el modelo operando sobre señal cruda.
 - Fechas y metadatos (`toi_created`, `rowupdate`, `release_date`, `toipfx`, `toidisplay`): administracion del catalogo, sin valor predictivo.
 
