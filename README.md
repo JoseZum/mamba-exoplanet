@@ -249,12 +249,76 @@ python -c "import torch; print('CUDA OK' if torch.cuda.is_available() else 'CPU 
 python -c "import seaborn, tensorboard, einops, imbalanced_learn; print('deps extra OK')"
 ```
 
-## Reproducir resultados (cuando estén disponibles)
+## Reproducir el pipeline de datos
+
+Los pasos siguientes asumen que ya completaste la sección **Instalación** y que estás dentro de `mamba-exoplanet/` con el `.venv` activado.
+
+### Fase 1 - Descargar el TOI Catalog y generar tics_labeled.csv
 
 ```bash
-python scripts/get_data.py --catalog data/splits/tics.csv
-python scripts/train.py --config configs/cnn_baseline.yaml
-python scripts/train.py --config configs/mamba_small.yaml
+# Descarga el catálogo completo desde el NASA Exoplanet Archive (TAP)
+python scripts/get_data.py
+```
+
+Esto produce:
+- `data/raw/toi_catalog.csv` - catálogo completo (gitignored, ~7,800 filas)
+- `data/splits/toi_summary.csv` - resumen ligero versionado
+
+Para generar `data/splits/tics_labeled.csv` (1,968 filas con CP y FP etiquetados) y reproducir el EDA, abrí y ejecutá el notebook:
+
+```bash
+jupyter lab notebooks/01_toi_eda.ipynb
+```
+
+El notebook genera `data/splits/tics_labeled.csv`, que es el input de la Fase 2.
+
+### Fase 2 - Descargar curvas de luz desde MAST
+
+El script `scripts/download_lightcurves.py` lee `tics_labeled.csv` y descarga los archivos `_lc.fits` de cadencia 2 min (autor SPOC) para cada TIC ID. Mantiene un manifest en `data/splits/manifest.csv` y es **idempotente**: si se corta, podés volver a correrlo y sigue donde quedó.
+
+**Piloto rápido (5 estrellas, ~30 segundos):**
+
+```bash
+python scripts/download_lightcurves.py --limit 5 --shuffle
+```
+
+**Descarga completa recomendada (1,968 estrellas, ~3-4 horas, ~9 GB de disco):**
+
+```bash
+mkdir -p logs
+python scripts/download_lightcurves.py --max-sectors 3 --shuffle > logs/download.log 2>&1 &
+```
+
+Flags útiles:
+- `--max-sectors N` - cap de sectores por TIC. Sin cap el dataset puede pasar de 30 GB. Para entrenamiento del paper, documentar la elección.
+- `--shuffle` - mezcla el orden de descarga con seed=42 (determinístico). Útil para que el progreso parcial sea representativo del dataset.
+- `--limit N` - procesa solo los primeros N TICs.
+- `--no-retry-failed` - no reintenta TICs en estado `error` o `download_failed` (por defecto los reintenta).
+
+**Monitoreo en otra terminal:**
+
+```bash
+tail -f logs/download.log
+python -c "import pandas as pd; print(pd.read_csv('data/splits/manifest.csv')['status'].value_counts())"
+```
+
+Salida del script:
+- `data/raw/lightcurves/mastDownload/TESS/...` - archivos `.fits` descargados (gitignored)
+- `data/splits/manifest.csv` - una fila por TIC con `status`, `n_sectors_downloaded`, `total_size_mb`, `downloaded_at` y otras (versionado)
+
+Estados posibles en el manifest:
+- `ok` - descarga exitosa, terminal
+- `no_data` - MAST no tiene SPOC 2-min para ese TIC, terminal (~10-20% del dataset esperado)
+- `error` - excepción durante la consulta, reintentable
+- `download_failed` - MAST devolvió resultados pero `download_all` falló, reintentable
+
+### Fases siguientes (no disponibles todavía)
+
+```bash
+python scripts/train.py --config configs/cnn_baseline.yaml         # Fase 6
+python scripts/smoke_train_mamba.py                                # Fase 8 preflight (WSL2)
+python scripts/train.py --config configs/mamba_small.yaml          # Fase 8
+python scripts/train.py --config configs/exomamba_v1.yaml          # Fase 10
 python scripts/evaluate.py --run experiments/<run_id>
 ```
 

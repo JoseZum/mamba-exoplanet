@@ -97,3 +97,57 @@ Solo 17 NaNs en `pl_orbper` (0.9%). El resto de las variables clave están compl
 - `data/splits/tics_labeled.csv`: 1,968 filas, columnas `tid / tfopwg_disp / st_tmag / pl_orbper / label`.
 - Fase 1 completa.
 - Listo para arrancar Fase 2 (descarga de curvas de luz desde MAST).
+
+---
+
+## 2026-05-04 | Fase 2: Pipeline de descarga MAST (script y piloto)
+
+### Lo que se hizo
+
+- Script `scripts/download_lightcurves.py` que lee `data/splits/tics_labeled.csv`, consulta MAST por cada TIC ID via `lightkurve`, descarga los archivos `_lc.fits` de cadencia 2 min (autor SPOC) y mantiene un manifest CSV con el resultado por TIC.
+- Manifest `data/splits/manifest.csv` con columnas `tid / label / n_sectors_found / n_sectors_downloaded / sectors / total_size_mb / status / error / duration_s / downloaded_at`. Versionado.
+- Piloto de 5 estrellas (orden mezclado con seed=42).
+
+### Decisiones tomadas
+
+**SPOC 2-min como única cadencia.**
+La búsqueda usa `author="SPOC"` y `exptime=120`. Es la pipeline oficial de NASA que produce `PDCSAP_FLUX`, la misma señal que usan AstroNet y ExoMiner. TOIs que solo tienen FFI 30-min o QLP se marcan como `no_data` y se descartan del dataset. Mantenerlas implicaría manejar dos pipelines de preprocesamiento distintos, lo cual no aporta a Tier 1.
+
+**El script descarga FITS, NO extrae PDCSAP_FLUX.**
+La extracción de la serie PDCSAP_FLUX y el preprocesamiento (normalización, NaN handling, longitud fija) ocurren en Fase 3. Esta separación permite reanudar el pipeline desde cualquier punto sin re-descargar.
+
+**Idempotencia con estados terminales.**
+Estados `ok` y `no_data` son terminales: el script los saltea en corridas sucesivas. Estados `error` y `download_failed` se reintentan por defecto (típicamente fallos transitorios de MAST). Flag opcional `--no-retry-failed` para deshabilitar reintentos. Esta distinción evita el bug de "marcar como hecho cualquier cosa que esté en el manifest", que perdería data de TICs con fallos temporales.
+
+**Reintento limpio sin duplicados.**
+Cuando un TIC se reintenta, su fila vieja se borra del manifest antes de añadir la nueva. Garantiza una fila por TIC.
+
+**Manifest se escribe cada 10 TICs, no al final.**
+Una corrida de ~1,968 TICs toma horas. Si se corta, perdemos a lo sumo 10 descargas, no todo el progreso.
+
+**Cap `--max-sectors 3` recomendado para descarga completa.**
+El piloto reveló que un TIC tenía 32 sectores (63 MB). Sin cap, el dataset puede pasar de 30 GB. Con cap=3, ~9 GB. Se documenta en el script que capar sectores sesga el dataset (siempre se toman los primeros) y que para entrenamiento del paper hay que decidir explícitamente la política de selección. Para Tier 1 con longitud fija L=18,000 (un sector), 3 es suficiente y deja margen para elegir el mejor sector después.
+
+**Mantener los 1,968 TOIs durante la descarga (incluye los 64 CP con período > 27 días).**
+Descartarlos en Fase 2 perdería data irrecuperable. La decisión de filtrarlos o no se traslada a Fase 3 (preprocesamiento), donde se decide cómo manejar tránsitos parciales o ausentes. La descarga no cuesta nada extra por mantenerlos.
+
+**`downloaded_at` en formato ISO-8601 UTC.**
+Para reproducibilidad: deja constancia exacta de cuándo se obtuvo cada FITS desde MAST (los datos pueden actualizarse).
+
+### Descubrimientos del piloto
+
+**1 de 5 TICs sin SPOC 2-min (TIC 354400186).**
+Era candidato del catálogo TOI pero MAST no devuelve curvas SPOC de cadencia 120s para esa estrella. Confirmamos que la pérdida del 10-20% del dataset por este motivo es esperable. El conteo final etiquetado se confirmará al terminar la descarga completa.
+
+**Outlier de 32 sectores (TIC 272086159).**
+Una sola estrella aportó 63 MB y tomó 60 s. Justifica el cap. Estrellas en la zona de visión continua de TESS pueden tener decenas de sectores acumulados.
+
+**Patrón de archivos confirmado.**
+Los FITS se guardan como `mastDownload/TESS/tess<fecha>-s<sector>-<tid:016d>-<scid>-s/tess<fecha>-s<sector>-<tid:016d>-<scid>-s_lc.fits`. El TIC aparece padded a 16 dígitos. El cálculo de `total_size_mb` con el patrón `**/*{tid:016d}*_lc.fits` funciona correctamente.
+
+### Estado al cierre de esta sesión
+
+- `scripts/download_lightcurves.py` listo y validado con piloto de 5 TICs (4 ok, 1 no_data, ~76 MB).
+- `data/splits/manifest.csv` con 5 filas.
+- `data/raw/lightcurves/mastDownload/TESS/...` con 39 archivos FITS (~76 MB).
+- Descarga completa (1,963 TICs restantes) **NO ejecutada todavía**: queda como tarea para correr en background del usuario. ETA estimado 3-4 horas, ~9 GB de disco.
