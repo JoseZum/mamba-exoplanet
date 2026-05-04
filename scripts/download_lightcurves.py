@@ -1,4 +1,5 @@
-"""Descarga archivos _lc.fits de curvas de luz TESS/SPOC 2-min desde MAST.
+"""
+Descarga archivos _lc.fits de curvas de luz TESS/SPOC 2-min desde MAST.
 
 Posteriormente, el pipeline de preprocesamiento (Fase 3) extraerá la
 serie PDCSAP_FLUX desde estos FITS. Este script solo descarga.
