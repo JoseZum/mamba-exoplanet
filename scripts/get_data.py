@@ -1,4 +1,5 @@
-"""Descarga el TOI Catalog completo desde el NASA Exoplanet Archive (TAP).
+"""
+Descarga el TOI Catalog completo desde el NASA Exoplanet Archive (TAP).
 
 Salida:
   data/raw/toi_catalog.csv | tabla completa, gitignored
