@@ -145,9 +145,50 @@ Una sola estrella aportó 63 MB y tomó 60 s. Justifica el cap. Estrellas en la 
 **Patrón de archivos confirmado.**
 Los FITS se guardan como `mastDownload/TESS/tess<fecha>-s<sector>-<tid:016d>-<scid>-s/tess<fecha>-s<sector>-<tid:016d>-<scid>-s_lc.fits`. El TIC aparece padded a 16 dígitos. El cálculo de `total_size_mb` con el patrón `**/*{tid:016d}*_lc.fits` funciona correctamente.
 
-### Estado al cierre de esta sesión
+### Estado al cierre de esta sesión (piloto)
 
 - `scripts/download_lightcurves.py` listo y validado con piloto de 5 TICs (4 ok, 1 no_data, ~76 MB).
 - `data/splits/manifest.csv` con 5 filas.
 - `data/raw/lightcurves/mastDownload/TESS/...` con 39 archivos FITS (~76 MB).
 - Descarga completa (1,963 TICs restantes) **NO ejecutada todavía**: queda como tarea para correr en background del usuario. ETA estimado 3-4 horas, ~9 GB de disco.
+
+---
+
+## 2026-05-04 | Fase 2: Descarga completa finalizada
+
+### Resultados finales (1,968 TICs procesados)
+
+| Estado | Cantidad | % |
+|---|---|---|
+| ok | 1,705 | 86.6% |
+| no_data | 259 | 13.2% |
+| error | 4 | 0.2% |
+| **Total** | **1,968** | |
+
+- Sectores descargados: 4,182 (promedio 2.45 por TIC)
+- Tamaño total en disco: 7.83 GB
+- Ruta: `data/raw/lightcurves/mastDownload/TESS/`
+
+### Interpretación de los estados
+
+**no_data (259 TICs, 13.2%):** MAST confirmó que no existen curvas SPOC de cadencia 2 min para esas estrellas. Pérdida esperada y consistente con la estimación de Fase 0 (10-20%). No son fallos transitorios: el catálogo TOI incluye objetos observados por pipelines alternativas (QLP, FFI 30 min) que descartamos deliberadamente para mantener un preprocesamiento uniforme.
+
+**error (4 TICs, 0.2%):** Fallos transitorios de red o MAST. Se pueden reintentar con `python scripts/download_lightcurves.py` sin flags adicionales (el script reintenta estados `error` por defecto). Si persisten, se descartan — 4 TICs no afectan el dataset.
+
+**Dataset efectivo para Fase 3:** 1,705 TICs con al menos 1 sector SPOC 2-min descargado. La distribución exacta CP/FP dentro de los 1,705 se determina cruzando con `tics_labeled.csv` al iniciar Fase 3.
+
+### Decisión: los 4 errores
+
+Se recomienda un reintento rápido antes de iniciar Fase 3:
+
+```bash
+.venv\Scripts\python.exe scripts/download_lightcurves.py
+```
+
+Si siguen fallando, se documentan como pérdida permanente y Fase 3 procede con los 1,705.
+
+### Estado al cierre
+
+- `data/splits/manifest.csv`: 1,968 filas, descarga completa.
+- `data/raw/lightcurves/`: 7.83 GB de archivos FITS.
+- **Fase 2 completada.** Listo para Fase 3 (preprocesamiento base: extracción PDCSAP_FLUX, normalización, NaN handling, longitud fija L=18,000 → `data/processed/global/<tic>.pt`).
