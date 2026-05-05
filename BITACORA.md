@@ -230,7 +230,35 @@ Cada `.pt` guarda no solo el tensor de flux sino también la máscara de validez
 **Manifest se escribe cada 50 TICs.**
 Más espaciado que Fase 2 (cada 10) porque el procesamiento es CPU-only y mucho más rápido por TIC (~décimas de segundo vs ~10 segundos en descarga).
 
-### Estado al cierre de esta sesión
+### Resultados de la corrida completa
 
-- `scripts/preprocess_global.py` listo, **sin ejecutar todavía**.
-- Próximo paso: piloto con `--limit 10`, validar que los `.pt` tienen forma y contenido razonable (smoke check con `torch.load` + plot de una curva), y luego correr completo sobre los 1,705 TICs `ok` del manifest de Fase 2.
+| Estado | Cantidad |
+|---|---|
+| ok | 1,576 |
+| no_fits | 14 |
+| dropped_low_quality | 1 |
+| **Total únicos** | **1,591** |
+
+**Dataset final Fase 3: 1,576 archivos `.pt`** en `data/processed/global/`.
+
+- Distribución de clases: **605 CP (label=1) + 971 FP (label=0)**, ratio 1:1.60 (cercano al 1:1.71 esperado).
+- Valid fraction promedio: **0.902** (90.2% de puntos reales por curva en promedio).
+- Valid fraction min/max: 0.524 / 0.978. El piso 0.524 es el TIC más ruidoso que pasó el umbral.
+- Tiempo total: ~22 min (CPU-only, ~0.8s por TIC).
+
+### Bug encontrado: duplicados en `manifest.csv` de Fase 2
+
+La corrida procesó 2,011 filas en vez de las 1,705 esperadas. Diagnóstico: el `manifest.csv` de Fase 2 tenía **116 tids duplicados** (~99 con doble fila `ok`). Causa probable: la lógica de retry borraba la fila vieja antes del nuevo intento, pero algún path (probablemente cuando MAST devolvía éxito tras un fallo previo escrito en otra corrida) no limpiaba bien.
+
+**Impacto real: cero pérdida de datos.** Los TICs duplicados se procesaron 2 veces y los `.pt` se sobreescribieron entre sí (mismo tid → mismo archivo). El conteo real en disco (1,576 archivos) es el correcto.
+
+**Mitigación aplicada:**
+- `manifest.csv` deduplicado por `tid` con `keep='last'` (1,968 → 1,852 filas).
+- `processed_manifest.csv` deduplicado igual (2,011 → 1,591 filas).
+- TODO documentado para Fase 2: revisar la lógica de retry de `download_lightcurves.py` antes de futuras corridas para que no genere duplicados desde el inicio.
+
+### Estado al cierre
+
+- 1,576 archivos `.pt` listos en `data/processed/global/` con forma `{global_view: (1, 18000), valid_mask: (1, 18000), label, sector, valid_fraction, tid}`.
+- `data/splits/processed_manifest.csv`: 1,591 filas únicas, versionado.
+- **Fase 3 completada.** Listo para Fase 4: splits train/val/test **por TIC ID** (15/15/70) preservando estratificación de clase + `Dataset` PyTorch que devuelva el dict con `global_view` y campos opcionales para Tier 2.
