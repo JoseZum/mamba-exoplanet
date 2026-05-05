@@ -2,9 +2,9 @@
 Preprocesamiento base (vista global) para Tier 1.
 
 Por cada TIC con status=ok en data/splits/manifest.csv:
-  1. Lee todos sus archivos _lc.fits.
-  2. Elige el sector con mayor fraccion de puntos validos (QUALITY==0 y PDCSAP_FLUX
-     finito). Criterio de "mejor sector" del proyecto.
+  1. Lee todos sus archivos _lc.fits en los diferentes sectores.
+  2. Elige el sector con mayor fracción de puntos validos, 
+  donde un punto es valido si QUALITY=0 y PDCSAP_FLUX (columna de brillo) es finito y tiene menos NaNs.
   3. Enmascara puntos con QUALITY != 0 (los pone NaN).
   4. Interpola linealmente gaps de NaN de longitud <= MAX_GAP puntos.
   5. Descarta el TIC si la fraccion de puntos validos finales < MIN_VALID_FRACTION.
