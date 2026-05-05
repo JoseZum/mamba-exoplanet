@@ -2,23 +2,32 @@
 Preprocesamiento base (vista global) para Tier 1.
 
 Por cada TIC con status=ok en data/splits/manifest.csv:
+
   1. Lee todos sus archivos _lc.fits en los diferentes sectores.
+
   2. Elige el sector con mayor fracción de puntos validos, 
   donde un punto es valido si QUALITY=0 y PDCSAP_FLUX (columna de brillo) es finito y tiene menos NaNs.
+
   3. Enmascara puntos con QUALITY != 0 (los pone NaN).
+
   4. Interpola linealmente gaps de NaN de longitud <= MAX_GAP puntos.
+  Ejm: [1.00, 1.01, NaN, 1.03, 1.04] se puede rellenar como: [1.00, 1.01, 1.02, 1.03, 1.04]
+
   5. Descarta el TIC si la fraccion de puntos validos finales < MIN_VALID_FRACTION.
+
   6. Normaliza dividiendo por la mediana de la propia curva (sin estadistica global,
      evita leakage train->test).
+
   7. Recorta centrado a L=18000 (o padea con 1.0 si len < L) y guarda valid_mask.
 
 Salida:
-  data/processed/global/<tid>.pt   tensor por TIC (gitignored)
-  data/splits/processed_manifest.csv   versionado, una fila por TIC
+  data/processed/global/<tid>.pt | tensor por TIC (gitignored)
+  data/splits/processed_manifest.csv | versionado, una fila por TIC
 
 Uso:
   python scripts/preprocess_global.py --limit 10    # piloto
   python scripts/preprocess_global.py               # dataset completo
+  
 """
 
 from __future__ import annotations
