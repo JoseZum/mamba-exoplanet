@@ -15,9 +15,18 @@ Por cada TIC con status=ok en data/splits/manifest.csv:
   Si MAX_GAP=n, entonces runs de NaN de longitud <= n se rellenan, y runs > n quedan como NaN.
 
   5. Descarta el TIC si la fraccion de puntos validos finales < MIN_VALID_FRACTION.
+  Si después de limpiar la curva menos del 50% de los puntos son válidos, ese TIC se descarta,
+  debido a que puede llegar a ser más ruido que señal.
 
   6. Normaliza dividiendo por la mediana de la propia curva (sin estadistica global,
-     evita leakage train->test).
+     para evitar data leakage).
+
+    Las estrellas no tienen todas el mismo brillo. Una estrella puede tener flujo promedio de 1000, otra de 50000, otra de 200000.
+    Pero al modelo no le interesa el brillo absoluto. Le interesa la forma relativa de la curva, especialmente las bajadas pequeñas.
+
+    Entonces se hace:
+
+    flux_normalizado = flux / mediana_de_esa_misma_curva
 
   7. Recorta centrado a L=18000 (o padea con 1.0 si len < L) y guarda valid_mask.
 
@@ -58,7 +67,6 @@ PROC_COLS = [
     "tid", "label", "sector_chosen", "valid_fraction", "n_points_raw",
     "status", "error", "duration_s", "processed_at",
 ]
-
 
 def find_fits_for_tic(tid: int) -> list[Path]:
     return sorted(RAW_DIR.glob(f"**/*{tid:016d}*_lc.fits"))
