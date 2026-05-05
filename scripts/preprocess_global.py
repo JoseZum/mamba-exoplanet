@@ -57,6 +57,9 @@ def find_fits_for_tic(tid: int) -> list[Path]:
 def load_sector(path: Path) -> tuple[np.ndarray, np.ndarray, int]:
     with fits.open(path, memmap=False) as hdul:
         data = hdul[1].data
+        cols = set(data.columns.names)
+        if "PDCSAP_FLUX" not in cols or "QUALITY" not in cols:
+            raise ValueError(f"FITS sin PDCSAP_FLUX/QUALITY: {path.name}")
         flux = np.asarray(data["PDCSAP_FLUX"], dtype=np.float64)
         quality = np.asarray(data["QUALITY"], dtype=np.int32)
         sector = int(hdul[0].header.get("SECTOR", -1))
@@ -151,19 +154,25 @@ def process_tic(tid: int, label: int) -> dict:
             return row
         flux_norm = flux_interp / median
 
-        # 5. Mascara: True donde hay dato real (original o interpolado)
+        # 5. Mascara: True = utilizable por el modelo (dato original o interpolado corto).
+        #    False = gap largo no interpolado o padding posterior.
+        #    No distingue original vs interpolado; para Tier 1 no hace falta.
         valid_mask = np.isfinite(flux_norm)
         flux_norm[~valid_mask] = 1.0  # gaps largos -> mediana normalizada
 
         # 6. Longitud fija
         flux_L, mask_L = to_fixed_length(flux_norm, valid_mask, L)
 
+        # Forma (1, L): canal explicito para CNN 1D / Mamba.
+        global_view = torch.from_numpy(flux_L.astype(np.float32)).unsqueeze(0)
+        valid_mask_t = torch.from_numpy(mask_L).unsqueeze(0)
+
         OUT_DIR.mkdir(parents=True, exist_ok=True)
         torch.save({
             "tid": tid,
             "label": label,
-            "flux": torch.from_numpy(flux_L.astype(np.float32)),
-            "valid_mask": torch.from_numpy(mask_L),
+            "global_view": global_view,
+            "valid_mask": valid_mask_t,
             "sector": sector,
             "valid_fraction": final_valid,
         }, OUT_DIR / f"{tid}.pt")
@@ -189,6 +198,7 @@ def main() -> int:
         sys.exit(f"No existe {LABELED_PATH}. Corre antes scripts/get_data.py.")
 
     manifest = pd.read_csv(MANIFEST_PATH)
+    manifest["status"] = manifest["status"].astype(str).str.strip().str.lower()
     labels = pd.read_csv(LABELED_PATH)[["tid", "label"]]
     todo = (
         manifest[manifest["status"] == "ok"][["tid"]]
