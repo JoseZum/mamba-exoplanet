@@ -6,7 +6,7 @@ Por cada TIC con status=ok en data/splits/manifest.csv:
   1. Lee todos sus archivos _lc.fits en los diferentes sectores.
 
   2. Elige el sector con mayor fracción de puntos validos, 
-  donde un punto es valido si QUALITY=0 y PDCSAP_FLUX (columna de brillo) es finito y tiene menos NaNs.
+    donde un punto es valido si QUALITY=0 y PDCSAP_FLUX (columna de brillo) es finito y tiene menos NaNs.
 
   3. Enmascara puntos con QUALITY != 0 (los pone NaN).
 
@@ -15,11 +15,10 @@ Por cada TIC con status=ok en data/splits/manifest.csv:
     Si MAX_GAP=n, entonces runs de NaN de longitud <= n se rellenan, y runs > n quedan como NaN.
 
   5. Descarta el TIC si la fraccion de puntos validos finales < MIN_VALID_FRACTION.
-  Si después de limpiar la curva menos del 50% de los puntos son válidos, ese TIC se descarta,
-  debido a que puede llegar a ser más ruido que señal.
+    Si después de limpiar la curva menos del 50% de los puntos son válidos, ese TIC se descarta,
+    debido a que puede llegar a ser más ruido que señal.
 
-  6. Normaliza dividiendo por la mediana de la propia curva (sin estadistica global,
-     para evitar data leakage).
+  6. Normaliza dividiendo por la mediana de la propia curva (sin estadistica global,para evitar data leakage).
 
     Las estrellas no tienen todas el mismo brillo. Una estrella puede tener flujo promedio de 1000, otra de 50000, otra de 200000.
     Pero al modelo no le interesa el brillo absoluto. Le interesa la forma relativa de la curva, especialmente las bajadas pequeñas.
