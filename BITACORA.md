@@ -192,3 +192,45 @@ Si siguen fallando, se documentan como pérdida permanente y Fase 3 procede con 
 - `data/splits/manifest.csv`: 1,968 filas, descarga completa.
 - `data/raw/lightcurves/`: 7.83 GB de archivos FITS.
 - **Fase 2 completada.** Listo para Fase 3 (preprocesamiento base: extracción PDCSAP_FLUX, normalización, NaN handling, longitud fija L=18,000 → `data/processed/global/<tic>.pt`).
+
+---
+
+## 2026-05-04 | Fase 3: Preprocesamiento base (vista global)
+
+### Lo que se hizo
+
+- Script `scripts/preprocess_global.py` que toma los TICs con `status=ok` del manifest de Fase 2, extrae `PDCSAP_FLUX` directamente de los FITS con `astropy.io.fits` (más rápido que `lightkurve.read`), y produce un tensor `.pt` por TIC en `data/processed/global/<tid>.pt`.
+- Manifest de salida `data/splits/processed_manifest.csv` con una fila por TIC: `tid, label, sector_chosen, valid_fraction, n_points_raw, status, error, duration_s, processed_at`. Versionado.
+
+### Decisiones tomadas
+
+**Estrategia "mejor sector" en lugar de concatenar.**
+Se elige un único sector por TIC en vez de concatenar todos los sectores descargados (hasta 3 por el cap de Fase 2). Razón: el output final es L=18,000 y los sectores TESS de 2-min tienen ~20,000 puntos, así que un solo sector ya casi llena la ventana. Concatenar 2-3 sectores y después recortar a 18k significaría en la práctica usar solo el inicio de la concatenación — no es "más datos", es "el primer sector que apareció". Además, concatenar mete discontinuidades artificiales entre sectores (gaps de días/semanas entre observaciones) que la CNN o Mamba podrían aprender como ruido espurio. Mantenemos los otros sectores en disco por si en Tier 2 o trabajos futuros se decide procesarlos.
+
+**Criterio de "mejor sector": mayor fracción de puntos válidos.**
+Para cada sector candidato se calcula `valid_fraction = mean((QUALITY == 0) & isfinite(PDCSAP_FLUX))` sobre el flux crudo y se queda con el sector que maximiza esa fracción. Es objetivo, no requiere metadata externa, y favorece curvas limpias sobre curvas con muchos huecos. Se descartó la alternativa de "elegir el sector que cubra el tránsito según `pl_orbper` y epoch del catálogo" porque (a) requiere metadata que recién entra fuerte en Tier 2, (b) los TOIs sin period bien definido quedarían sin "mejor sector" y (c) introduce un acople innecesario con el catálogo en una fase que debería ser sobre fotometría pura.
+
+**Manejo de NaNs en dos niveles.**
+- *Gaps cortos* (≤5 puntos consecutivos, ~10 minutos de cadencia TESS) se interpolan linealmente. Es la cantidad típica de puntos perdidos por flags transitorios sin que la interpolación introduzca señal espuria.
+- *Gaps largos* (>5 puntos) NO se interpolan: se dejan como NaN durante el cómputo de `valid_fraction` y luego se reemplazan con `1.0` (la mediana normalizada) al guardar el tensor. La `valid_mask` que acompaña el tensor marca esos puntos como `False` para que el modelo los pueda ignorar opcionalmente.
+
+**Umbral de descarte: `valid_fraction < 0.5`.**
+Si después de enmascarar `QUALITY != 0` e interpolar gaps cortos queda menos del 50% de puntos válidos, se descarta el TIC con `status=dropped_low_quality`. Es preferible perder ese TIC que meter una curva mayoritariamente sintética (rellena con 1.0) al modelo. El 50% es un valor conservador; si Fase 6/8 deja ver que descartamos demasiado, se baja a 0.4.
+
+**Normalización por mediana de la propia curva (NO global).**
+`flux_norm = flux / nanmedian(flux)`. Usar la mediana del propio sector evita el `data leakage` clásico: si normalizáramos con estadísticas globales del dataset (ej. la mediana del train), las curvas del test tendrían información del train codificada en su escala. Cada curva se normaliza independientemente. Esto está alineado con la sección 4.3 de la propuesta.
+
+**Recorte centrado (no por inicio) y padding con 1.0.**
+Como casi todos los sectores tienen ~20,000 puntos > 18,000, el caso típico es recortar. Se hace centrado: `start = (n - 18000) // 2`. Razón: los extremos de un sector TESS suelen tener peor calidad (descontinuidades por gaps de telemetría al inicio/fin del sector, momentum dumps), el centro es lo más limpio. Se descartan extremos por igual en lugar de tirar 2,000 puntos de un solo lado.
+Si por excepción `n < 18,000`, se padea simétricamente con `1.0` (mediana post-normalización, no introduce sesgo) y la `valid_mask` marca esas posiciones como `False`.
+
+**Output por TIC: dict con `flux`, `valid_mask`, `sector`, `valid_fraction`.**
+Cada `.pt` guarda no solo el tensor de flux sino también la máscara de validez (importante para que el modelo distinga datos reales de padding/gaps), el sector elegido (trazabilidad: poder volver al FITS original) y la fracción válida final (útil para análisis de errores en Fase 9: ¿los TICs mal clasificados tienen menor calidad de curva?).
+
+**Manifest se escribe cada 50 TICs.**
+Más espaciado que Fase 2 (cada 10) porque el procesamiento es CPU-only y mucho más rápido por TIC (~décimas de segundo vs ~10 segundos en descarga).
+
+### Estado al cierre de esta sesión
+
+- `scripts/preprocess_global.py` listo, **sin ejecutar todavía**.
+- Próximo paso: piloto con `--limit 10`, validar que los `.pt` tienen forma y contenido razonable (smoke check con `torch.load` + plot de una curva), y luego correr completo sobre los 1,705 TICs `ok` del manifest de Fase 2.
