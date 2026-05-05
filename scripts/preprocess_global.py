@@ -68,10 +68,13 @@ PROC_COLS = [
     "status", "error", "duration_s", "processed_at",
 ]
 
+
+# 1) Buscar todos los FITS de un TIC en los sectores disponibles.
 def find_fits_for_tic(tid: int) -> list[Path]:
     return sorted(RAW_DIR.glob(f"**/*{tid:016d}*_lc.fits"))
 
 
+# Leer un sector y recuperar flujo, calidad y sector.
 def load_sector(path: Path) -> tuple[np.ndarray, np.ndarray, int]:
     with fits.open(path, memmap=False) as hdul:
         data = hdul[1].data
@@ -84,12 +87,14 @@ def load_sector(path: Path) -> tuple[np.ndarray, np.ndarray, int]:
     return flux, quality, sector
 
 
+# 2) Medir la fraccion de puntos validos antes de elegir el mejor sector.
 def valid_fraction(flux: np.ndarray, quality: np.ndarray) -> float:
     if len(flux) == 0:
         return 0.0
     return float(((quality == 0) & np.isfinite(flux)).mean())
 
 
+# 4) Interpolar linealmente gaps cortos de NaN.
 def interpolate_short_gaps(x: np.ndarray, max_gap: int) -> np.ndarray:
     """Interpola linealmente runs de NaN de longitud <= max_gap. Gaps largos quedan NaN."""
     x = x.copy()
@@ -112,6 +117,7 @@ def interpolate_short_gaps(x: np.ndarray, max_gap: int) -> np.ndarray:
     return x
 
 
+# 7) Recortar o paddear la curva a longitud fija L.
 def to_fixed_length(flux: np.ndarray, mask: np.ndarray, target: int) -> tuple[np.ndarray, np.ndarray]:
     """Recorta centrado o padea con 1.0 (mediana post-normalizacion)."""
     n = len(flux)
@@ -142,7 +148,7 @@ def process_tic(tid: int, label: int) -> dict:
             row["status"] = "no_fits"
             return row
 
-        # 1. Elegir mejor sector (mayor fraccion valida en crudo)
+        # 1) Elegir mejor sector (mayor fraccion valida en crudo).
         best = None
         for p in paths:
             flux, quality, sector = load_sector(p)
@@ -153,35 +159,37 @@ def process_tic(tid: int, label: int) -> dict:
         row["sector_chosen"] = sector
         row["n_points_raw"] = len(flux)
 
-        # 2. Enmascarar bad quality e interpolar gaps cortos
+        # 3) Enmascarar puntos con QUALITY != 0.
         flux_masked = flux.astype(np.float64).copy()
         flux_masked[quality != 0] = np.nan
+
+        # 4) Interpolar gaps cortos de NaN y dejar los largos como NaN.
         flux_interp = interpolate_short_gaps(flux_masked, MAX_GAP)
 
-        # 3. Validacion de calidad final
+        # 5) Descartar TICs con fraccion final de puntos validos muy baja.
         final_valid = float(np.isfinite(flux_interp).mean())
         row["valid_fraction"] = round(final_valid, 4)
         if final_valid < MIN_VALID_FRACTION:
             row["status"] = "dropped_low_quality"
             return row
 
-        # 4. Normalizacion por mediana propia (evita leakage)
+        # 6) Normalizar por la mediana de la propia curva.
         median = np.nanmedian(flux_interp)
         if not np.isfinite(median) or median == 0:
             row["status"] = "dropped_bad_median"
             return row
         flux_norm = flux_interp / median
 
-        # 5. Mascara: True = utilizable por el modelo (dato original o interpolado corto).
+        # 6) Marcar como valido lo que el modelo puede usar.
         #    False = gap largo no interpolado o padding posterior.
         #    No distingue original vs interpolado; para Tier 1 no hace falta.
         valid_mask = np.isfinite(flux_norm)
         flux_norm[~valid_mask] = 1.0  # gaps largos -> mediana normalizada
 
-        # 6. Longitud fija
+        # 7) Recortar o paddear a longitud fija.
         flux_L, mask_L = to_fixed_length(flux_norm, valid_mask, L)
 
-        # Forma (1, L): canal explicito para CNN 1D / Mamba.
+        # 7) Forma (1, L): canal explicito para CNN 1D / Mamba.
         global_view = torch.from_numpy(flux_L.astype(np.float32)).unsqueeze(0)
         valid_mask_t = torch.from_numpy(mask_L).unsqueeze(0)
 
@@ -245,7 +253,7 @@ def main() -> int:
             pd.DataFrame(rows, columns=PROC_COLS).to_csv(OUT_MANIFEST, index=False)
 
     pd.DataFrame(rows, columns=PROC_COLS).to_csv(OUT_MANIFEST, index=False)
-    print("\n=== Resumen ===")
+    print("\nRESUMEN:")
     df = pd.DataFrame(rows)
     print(df["status"].value_counts().to_string())
     ok = df[df["status"] == "ok"]
