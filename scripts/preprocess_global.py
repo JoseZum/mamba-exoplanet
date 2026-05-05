@@ -12,6 +12,7 @@ Por cada TIC con status=ok en data/splits/manifest.csv:
 
   4. Interpola linealmente gaps de NaN de longitud <= MAX_GAP puntos.
   Ejm: [1.00, 1.01, NaN, 1.03, 1.04] se puede rellenar como: [1.00, 1.01, 1.02, 1.03, 1.04]
+  Si MAX_GAP=n, entonces runs de NaN de longitud <= n se rellenan, y runs > n quedan como NaN.
 
   5. Descarta el TIC si la fraccion de puntos validos finales < MIN_VALID_FRACTION.
 
@@ -27,7 +28,7 @@ Salida:
 Uso:
   python scripts/preprocess_global.py --limit 10    # piloto
   python scripts/preprocess_global.py               # dataset completo
-  
+
 """
 
 from __future__ import annotations
