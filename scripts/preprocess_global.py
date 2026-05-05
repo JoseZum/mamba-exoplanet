@@ -11,8 +11,8 @@ Por cada TIC con status=ok en data/splits/manifest.csv:
   3. Enmascara puntos con QUALITY != 0 (los pone NaN).
 
   4. Interpola linealmente gaps de NaN de longitud <= MAX_GAP puntos.
-  Ejm: [1.00, 1.01, NaN, 1.03, 1.04] se puede rellenar como: [1.00, 1.01, 1.02, 1.03, 1.04]
-  Si MAX_GAP=n, entonces runs de NaN de longitud <= n se rellenan, y runs > n quedan como NaN.
+    Ejm: [1.00, 1.01, NaN, 1.03, 1.04] se puede rellenar como: [1.00, 1.01, 1.02, 1.03, 1.04]
+    Si MAX_GAP=n, entonces runs de NaN de longitud <= n se rellenan, y runs > n quedan como NaN.
 
   5. Descarta el TIC si la fraccion de puntos validos finales < MIN_VALID_FRACTION.
   Si después de limpiar la curva menos del 50% de los puntos son válidos, ese TIC se descarta,
@@ -28,7 +28,8 @@ Por cada TIC con status=ok en data/splits/manifest.csv:
 
     flux_normalizado = flux / mediana_de_esa_misma_curva
 
-  7. Recorta centrado a L=18000 (o padea con 1.0 si len < L) y guarda valid_mask.
+  7. Recorta la longitud de la curva a L=18000 (o padea con 1.0 si len < L) y guarda valid_mask.
+    valid_mask es una máscara que indica qué partes de la curva son datos confiables y qué partes son relleno o huecos largos
 
 Salida:
   data/processed/global/<tid>.pt | tensor por TIC (gitignored)
